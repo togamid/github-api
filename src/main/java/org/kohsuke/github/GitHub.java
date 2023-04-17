@@ -684,6 +684,14 @@ public class GitHub {
         return GHRepository.read(this, tokens[0], tokens[1]);
     }
 
+    public GHDependabotAlert[] getAlertsForRepository(String name) throws IOException {
+        String[] tokens = name.split("/");
+        if (tokens.length != 2) {
+            throw new IllegalArgumentException("Repository name must be in format owner/repo");
+        }
+        return GHDependabotAlert.getForRepository(this, tokens[0], tokens[1]);
+    }
+
     /**
      * Gets the repository object from its ID.
      *

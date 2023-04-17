@@ -1346,6 +1346,24 @@ public class GHRepository extends GHObject {
         set().downloads(v);
     }
 
+    public void enableVulnerabilityAlerts() throws IOException {
+        root().createRequest()
+                .method("PUT")
+                .withUrlPath("/repos/" + this.getOwnerName() + "/" + this.getName() + "/vulnerability-alerts")
+                .send();
+    }
+
+    public void disableVulnerabilityAlerts() throws IOException {
+        root().createRequest()
+                .method("DELETE")
+                .withUrlPath("/repos/" + this.getOwnerName() + "/" + this.getName() + "/vulnerability-alerts")
+                .send();
+    }
+
+    public GHDependabotAlert[] getDependabotAlerts() throws IOException {
+        return GHDependabotAlert.getForRepository(this.getRoot(), this.getOwnerName(), this.getName());
+    }
+
     /**
      * Rename this repository.
      *
