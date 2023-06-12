@@ -1909,7 +1909,7 @@ public class GHRepository extends GHObject {
     /**
      * Retrieves all refs for the github repository.
      *
-     * @return an array of GHRef elements coresponding with the refs in the remote repository.
+     * @return an array of GHRef elements corresponding with the refs in the remote repository.
      * @throws IOException
      *             on failure communicating with GitHub
      */
@@ -1955,7 +1955,7 @@ public class GHRepository extends GHObject {
     }
 
     /**
-     * Retrive a ref of the given type for the current GitHub repository.
+     * Retrieve a ref of the given type for the current GitHub repository.
      *
      * @param refName
      *            eg: heads/branch
@@ -1982,7 +1982,7 @@ public class GHRepository extends GHObject {
     }
 
     /**
-     * Retrive a tree of the given type for the current GitHub repository.
+     * Retrieve a tree of the given type for the current GitHub repository.
      *
      * @param sha
      *            sha number or branch name ex: "main"
@@ -2229,6 +2229,29 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Gets check runs for given ref which validate provided parameters
+     *
+     * @param ref
+     *            the Git reference
+     * @param params
+     *            a map of parameters to filter check runs
+     * @return check runs for the given ref
+     * @throws IOException
+     *             the io exception
+     * @see <a href="https://developer.github.com/v3/checks/runs/#list-check-runs-for-a-specific-ref">List check runs
+     *      for a specific ref</a>
+     */
+    @Preview(ANTIOPE)
+    public PagedIterable<GHCheckRun> getCheckRuns(String ref, Map<String, Object> params) throws IOException {
+        GitHubRequest request = root().createRequest()
+                .withUrlPath(String.format("/repos/%s/%s/commits/%s/check-runs", getOwnerName(), name, ref))
+                .with(params)
+                .withPreview(ANTIOPE)
+                .build();
+        return new GHCheckRunsIterable(this, request);
+    }
+
+    /**
      * Creates a commit status.
      *
      * @param sha1
@@ -2240,7 +2263,7 @@ public class GHRepository extends GHObject {
      * @param description
      *            Optional short description.
      * @param context
-     *            Optinal commit status context.
+     *            Optional commit status context.
      * @return the gh commit status
      * @throws IOException
      *             the io exception
@@ -2725,6 +2748,21 @@ public class GHRepository extends GHObject {
     }
 
     /**
+     * Gets a variable by name
+     *
+     * @param name
+     *            the variable name (e.g. test-variable)
+     * @return the variable
+     * @throws IOException
+     *             the io exception
+     */
+    public GHRepositoryVariable getRepoVariable(String name) throws IOException {
+        return root().createRequest()
+                .withUrlPath(getApiTailUrl("actions/variables"), name)
+                .fetch(GHRepositoryVariable.class);
+    }
+
+    /**
      * Creates a new content, or update an existing content.
      *
      * @return the gh content builder
@@ -2845,14 +2883,31 @@ public class GHRepository extends GHObject {
      *             the io exception
      */
     public GHDeployKey addDeployKey(String title, String key) throws IOException {
+        return addDeployKey(title, key, false);
+    }
+
+    /**
+     * Add deploy key gh deploy key.
+     *
+     * @param title
+     *            the title
+     * @param key
+     *            the key
+     * @param readOnly
+     *            read-only ability of the key
+     * @return the gh deploy key
+     * @throws IOException
+     *             the io exception
+     */
+    public GHDeployKey addDeployKey(String title, String key, boolean readOnly) throws IOException {
         return root().createRequest()
                 .method("POST")
                 .with("title", title)
                 .with("key", key)
+                .with("read_only", readOnly)
                 .withUrlPath(getApiTailUrl("keys"))
                 .fetch(GHDeployKey.class)
                 .lateBind(this);
-
     }
 
     /**
@@ -2949,6 +3004,25 @@ public class GHRepository extends GHObject {
         } catch (FileNotFoundException e) {
             return null;
         }
+    }
+
+    // Only used within listCodeownersErrors().
+    private static class GHCodeownersErrors {
+        public List<GHCodeownersError> errors;
+    }
+
+    /**
+     * List errors in the {@code CODEOWNERS} file. Note that GitHub skips lines with incorrect syntax; these are
+     * reported in the web interface, but not in the API call which this library uses.
+     *
+     * @return the list of errors
+     * @throws IOException
+     *             the io exception
+     */
+    public List<GHCodeownersError> listCodeownersErrors() throws IOException {
+        return root().createRequest()
+                .withUrlPath(getApiTailUrl("codeowners/errors"))
+                .fetch(GHCodeownersErrors.class).errors;
     }
 
     /**
@@ -3507,6 +3581,26 @@ public class GHRepository extends GHObject {
 
             requester.method("PATCH").withUrlPath(repository.getApiTailUrl(""));
         }
+    }
+
+    /**
+     * Star a repository.
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public void star() throws IOException {
+        root().createRequest().method("PUT").withUrlPath(String.format("/user/starred/%s", full_name)).send();
+    }
+
+    /**
+     * Unstar a repository.
+     *
+     * @throws IOException
+     *             the io exception
+     */
+    public void unstar() throws IOException {
+        root().createRequest().method("DELETE").withUrlPath(String.format("/user/starred/%s", full_name)).send();
     }
 
     /**

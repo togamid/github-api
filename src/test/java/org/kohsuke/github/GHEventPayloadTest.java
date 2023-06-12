@@ -624,6 +624,18 @@ public class GHEventPayloadTest extends AbstractGitHubWireMockTest {
         assertThat(event.getCommits().get(0).getRemoved().size(), is(0));
         assertThat(event.getCommits().get(0).getModified().size(), is(1));
         assertThat(event.getCommits().get(0).getModified().get(0), is("README.md"));
+
+        assertThat(event.getHeadCommit().getSha(), is("0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c"));
+        assertThat(event.getHeadCommit().getAuthor().getEmail(), is("baxterthehacker@users.noreply.github.com"));
+        assertThat(event.getHeadCommit().getAuthor().getUsername(), is("baxterthehacker"));
+        assertThat(event.getHeadCommit().getCommitter().getEmail(), is("baxterthehacker@users.noreply.github.com"));
+        assertThat(event.getHeadCommit().getCommitter().getUsername(), is("baxterthehacker"));
+        assertThat(event.getHeadCommit().getAdded().size(), is(0));
+        assertThat(event.getHeadCommit().getRemoved().size(), is(0));
+        assertThat(event.getHeadCommit().getModified().size(), is(1));
+        assertThat(event.getHeadCommit().getModified().get(0), is("README.md"));
+        assertThat(event.getHeadCommit().getMessage(), is("Update README.md"));
+
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
         assertThat(formatter.format(event.getCommits().get(0).getTimestamp()), is("2015-05-05T23:40:15Z"));
@@ -1050,6 +1062,7 @@ public class GHEventPayloadTest extends AbstractGitHubWireMockTest {
         assertThat(workflowRun.getId(), is(680604745L));
         assertThat(workflowRun.getName(), is("CI"));
         assertThat(workflowRun.getHeadBranch(), is("main"));
+        assertThat(workflowRun.getDisplayTitle(), is("its-display-title"));
         assertThat(workflowRun.getHeadSha(), is("dbea8d8b6ed2cf764dfd84a215f3f9040b3d4423"));
         assertThat(workflowRun.getRunNumber(), is(6L));
         assertThat(workflowRun.getEvent(), is(GHEvent.WORKFLOW_DISPATCH));

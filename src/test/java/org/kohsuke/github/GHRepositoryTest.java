@@ -1345,6 +1345,31 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
     }
 
     /**
+     * Filter out the checks from a reference
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void getCheckRunsWithParams() throws Exception {
+        final int expectedCount = 1;
+        // Use github-api repository as it has checks set up
+        final Map<String, Object> params = new HashMap<>(1);
+        params.put("check_name", "build-only (Java 17)");
+        PagedIterable<GHCheckRun> checkRuns = gitHub.getOrganization("hub4j")
+                .getRepository("github-api")
+                .getCheckRuns("54d60fbb53b4efa19f3081417bfb6a1de30c55e4", params);
+
+        // Check if the checkruns are all succeeded and if we got all of them
+        int checkRunsCount = 0;
+        for (GHCheckRun checkRun : checkRuns) {
+            assertThat(checkRun.getConclusion(), equalTo(Conclusion.SUCCESS));
+            checkRunsCount++;
+        }
+        assertThat(checkRunsCount, equalTo(expectedCount));
+    }
+
+    /**
      * Gets the last commit status.
      *
      * @throws Exception
@@ -1537,5 +1562,49 @@ public class GHRepositoryTest extends AbstractGitHubWireMockTest {
     public void createSecret() throws Exception {
         GHRepository repo = getTempRepository();
         repo.createSecret("secret", "encrypted", "public");
+    }
+
+    /**
+     * Test to check star method by verifying stargarzer count.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void starTest() throws Exception {
+        String owner = "hub4j-test-org";
+        GHRepository repository = getRepository();
+        assertThat(repository.getOwner().getLogin(), equalTo(owner));
+        assertThat(repository.getStargazersCount(), is(0));
+        repository.star();
+        assertThat(repository.listStargazers2().toList().size(), is(1));
+        repository.unstar();
+        assertThat(repository.listStargazers().toList().size(), is(0));
+    }
+
+    /**
+     * Test to check getRepoVariable method.
+     *
+     * @throws Exception
+     *             the exception
+     */
+    @Test
+    public void testRepoActionVariable() throws Exception {
+        GHRepository repository = getRepository();
+        GHRepositoryVariable variable = repository.getRepoVariable("myvar");
+        assertThat(variable.getValue(), is("this is my var value"));
+    }
+
+    /**
+     * Test demoing the issue with a user having the maintain permission on a repository.
+     *
+     * @throws IOException
+     *             the exception
+     */
+    @Test
+    public void cannotRetrievePermissionMaintainUser() throws IOException {
+        GHRepository r = gitHub.getRepository("hub4j-test-org/maintain-permission-issue");
+        GHPermissionType permission = r.getPermission("alecharp");
+        assertThat(permission.toString(), is("MAINTAIN"));
     }
 }
